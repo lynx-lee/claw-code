@@ -10,7 +10,7 @@ fn provider_client_routes_grok_aliases_through_xai() {
 
     let client = ProviderClient::from_model("grok-mini").expect("grok alias should resolve");
 
-    assert_eq!(client.provider_kind(), ProviderKind::Xai);
+    assert_eq!(client.provider_kind(), ProviderKind::OpenAiCompat);
 }
 
 #[test]
@@ -23,7 +23,7 @@ fn provider_client_reports_missing_xai_credentials_for_grok_models() {
 
     match error {
         ApiError::MissingCredentials { provider, env_vars } => {
-            assert_eq!(provider, "xAI");
+            assert_eq!(provider, "xai");
             assert_eq!(env_vars, &["XAI_API_KEY"]);
         }
         other => panic!("expected missing xAI credentials, got {other:?}"),

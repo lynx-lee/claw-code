@@ -4,6 +4,7 @@ use std::time::Duration;
 use serde::Deserialize;
 use serde_json::{json, Value};
 
+use crate::config::ProviderConfig;
 use crate::error::ApiError;
 use crate::types::{
     ContentBlockDelta, ContentBlockDeltaEvent, ContentBlockStartEvent, ContentBlockStopEvent,
@@ -99,6 +100,43 @@ impl OpenAiCompatClient {
             ));
         };
         Ok(Self::new(api_key, config))
+    }
+
+    pub fn from_provider_config(config: &ProviderConfig) -> Result<Self, ApiError> {
+        let Some(api_key) = read_env_non_empty(&config.api_key_env)? else {
+            return Err(ApiError::missing_credentials(
+                &config.name,
+                &[&config.api_key_env as &str],
+            ));
+        };
+
+        let base_url = config
+            .base_url_env
+            .as_ref()
+            .and_then(|env| std::env::var(env).ok())
+            .filter(|s| !s.is_empty())
+            .unwrap_or_else(|| config.default_base_url.clone());
+
+        Ok(Self {
+            http: reqwest::Client::new(),
+            api_key,
+            config: OpenAiCompatConfig {
+                provider_name: Box::leak(config.name.clone().into_boxed_str()),
+                api_key_env: Box::leak(config.api_key_env.clone().into_boxed_str()),
+                base_url_env: Box::leak(
+                    config
+                        .base_url_env
+                        .clone()
+                        .unwrap_or_default()
+                        .into_boxed_str(),
+                ),
+                default_base_url: Box::leak(config.default_base_url.clone().into_boxed_str()),
+            },
+            base_url,
+            max_retries: DEFAULT_MAX_RETRIES,
+            initial_backoff: DEFAULT_INITIAL_BACKOFF,
+            max_backoff: DEFAULT_MAX_BACKOFF,
+        })
     }
 
     #[must_use]
@@ -1071,9 +1109,9 @@ mod tests {
         assert!(matches!(
             error,
             ApiError::MissingCredentials {
-                provider: "xAI",
+                provider,
                 ..
-            }
+            } if provider == "xAI"
         ));
     }
 

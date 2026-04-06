@@ -1,4 +1,5 @@
 mod client;
+mod config;
 mod error;
 mod prompt_cache;
 mod providers;
@@ -8,6 +9,10 @@ mod types;
 pub use client::{
     oauth_token_is_expired, read_base_url, read_xai_base_url, resolve_saved_oauth_token,
     resolve_startup_auth_source, MessageStream, OAuthTokenSet, ProviderClient,
+};
+pub use config::{
+    all_models, all_providers, get_model_config, get_provider_config, init_registry, ApiType,
+    ModelConfig, ProviderConfig,
 };
 pub use error::ApiError;
 pub use prompt_cache::{

@@ -488,9 +488,8 @@ impl AnthropicClient {
             return Ok(());
         };
 
-        let counted_input_tokens = match self.count_tokens(request).await {
-            Ok(count) => count,
-            Err(_) => return Ok(()),
+        let Ok(counted_input_tokens) = self.count_tokens(request).await else {
+            return Ok(());
         };
         let estimated_total_tokens = counted_input_tokens.saturating_add(request.max_tokens);
         if estimated_total_tokens > limit.context_window_tokens {
@@ -512,7 +511,10 @@ impl AnthropicClient {
             input_tokens: u32,
         }
 
-        let request_url = format!("{}/v1/messages/count_tokens", self.base_url.trim_end_matches('/'));
+        let request_url = format!(
+            "{}/v1/messages/count_tokens",
+            self.base_url.trim_end_matches('/')
+        );
         let request_body = self.request_profile.render_json_body(request)?;
         let response = self
             .build_request(&request_url)

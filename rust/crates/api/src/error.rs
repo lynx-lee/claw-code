@@ -20,8 +20,8 @@ const CONTEXT_WINDOW_ERROR_MARKERS: &[&str] = &[
 #[derive(Debug)]
 pub enum ApiError {
     MissingCredentials {
-        provider: &'static str,
-        env_vars: &'static [&'static str],
+        provider: String,
+        env_vars: Vec<String>,
     },
     ContextWindowExceeded {
         model: String,
@@ -57,11 +57,11 @@ pub enum ApiError {
 
 impl ApiError {
     #[must_use]
-    pub const fn missing_credentials(
-        provider: &'static str,
-        env_vars: &'static [&'static str],
-    ) -> Self {
-        Self::MissingCredentials { provider, env_vars }
+    pub fn missing_credentials(provider: impl Into<String>, env_vars: &[impl AsRef<str>]) -> Self {
+        Self::MissingCredentials {
+            provider: provider.into(),
+            env_vars: env_vars.iter().map(|s| s.as_ref().to_string()).collect(),
+        }
     }
 
     #[must_use]

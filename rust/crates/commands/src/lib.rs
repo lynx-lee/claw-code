@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 use std::env;
 use std::fmt;
+use std::fmt::Write;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -2314,8 +2315,7 @@ pub fn resolve_skill_invocation(
             .unwrap_or_default();
         if !skill_token.is_empty() {
             if let Err(error) = resolve_skill_path(cwd, skill_token) {
-                let mut message =
-                    format!("Unknown skill: {skill_token} ({error})");
+                let mut message = format!("Unknown skill: {skill_token} ({error})");
                 let roots = discover_skill_roots(cwd);
                 if let Ok(available) = load_skills_from_roots(&roots) {
                     let names: Vec<String> = available
@@ -2324,15 +2324,10 @@ pub fn resolve_skill_invocation(
                         .map(|s| s.name.clone())
                         .collect();
                     if !names.is_empty() {
-                        message.push_str(&format!(
-                            "\n  Available skills: {}",
-                            names.join(", ")
-                        ));
+                        let _ = write!(message, "\n  Available skills: {}", names.join(", "));
                     }
                 }
-                message.push_str(
-                    "\n  Usage: /skills [list|install <path>|help|<skill> [args]]",
-                );
+                message.push_str("\n  Usage: /skills [list|install <path>|help|<skill> [args]]");
                 return Err(message);
             }
         }

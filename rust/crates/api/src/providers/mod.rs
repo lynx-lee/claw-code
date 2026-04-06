@@ -4,6 +4,7 @@ use std::pin::Pin;
 
 use serde::Serialize;
 
+use crate::config::{get_model_config, get_provider_config, ApiType, ProviderConfig};
 use crate::error::ApiError;
 use crate::types::{MessageRequest, MessageResponse};
 
@@ -31,16 +32,16 @@ pub trait Provider {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ProviderKind {
     Anthropic,
-    Xai,
-    OpenAi,
+    OpenAiCompat,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct ProviderMetadata {
-    pub provider: ProviderKind,
-    pub auth_env: &'static str,
-    pub base_url_env: &'static str,
-    pub default_base_url: &'static str,
+impl From<ApiType> for ProviderKind {
+    fn from(api_type: ApiType) -> Self {
+        match api_type {
+            ApiType::Anthropic => Self::Anthropic,
+            ApiType::OpenAiCompat => Self::OpenAiCompat,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -49,143 +50,65 @@ pub struct ModelTokenLimit {
     pub context_window_tokens: u32,
 }
 
-const MODEL_REGISTRY: &[(&str, ProviderMetadata)] = &[
-    (
-        "opus",
-        ProviderMetadata {
-            provider: ProviderKind::Anthropic,
-            auth_env: "ANTHROPIC_API_KEY",
-            base_url_env: "ANTHROPIC_BASE_URL",
-            default_base_url: anthropic::DEFAULT_BASE_URL,
-        },
-    ),
-    (
-        "sonnet",
-        ProviderMetadata {
-            provider: ProviderKind::Anthropic,
-            auth_env: "ANTHROPIC_API_KEY",
-            base_url_env: "ANTHROPIC_BASE_URL",
-            default_base_url: anthropic::DEFAULT_BASE_URL,
-        },
-    ),
-    (
-        "haiku",
-        ProviderMetadata {
-            provider: ProviderKind::Anthropic,
-            auth_env: "ANTHROPIC_API_KEY",
-            base_url_env: "ANTHROPIC_BASE_URL",
-            default_base_url: anthropic::DEFAULT_BASE_URL,
-        },
-    ),
-    (
-        "grok",
-        ProviderMetadata {
-            provider: ProviderKind::Xai,
-            auth_env: "XAI_API_KEY",
-            base_url_env: "XAI_BASE_URL",
-            default_base_url: openai_compat::DEFAULT_XAI_BASE_URL,
-        },
-    ),
-    (
-        "grok-3",
-        ProviderMetadata {
-            provider: ProviderKind::Xai,
-            auth_env: "XAI_API_KEY",
-            base_url_env: "XAI_BASE_URL",
-            default_base_url: openai_compat::DEFAULT_XAI_BASE_URL,
-        },
-    ),
-    (
-        "grok-mini",
-        ProviderMetadata {
-            provider: ProviderKind::Xai,
-            auth_env: "XAI_API_KEY",
-            base_url_env: "XAI_BASE_URL",
-            default_base_url: openai_compat::DEFAULT_XAI_BASE_URL,
-        },
-    ),
-    (
-        "grok-3-mini",
-        ProviderMetadata {
-            provider: ProviderKind::Xai,
-            auth_env: "XAI_API_KEY",
-            base_url_env: "XAI_BASE_URL",
-            default_base_url: openai_compat::DEFAULT_XAI_BASE_URL,
-        },
-    ),
-    (
-        "grok-2",
-        ProviderMetadata {
-            provider: ProviderKind::Xai,
-            auth_env: "XAI_API_KEY",
-            base_url_env: "XAI_BASE_URL",
-            default_base_url: openai_compat::DEFAULT_XAI_BASE_URL,
-        },
-    ),
-];
-
 #[must_use]
 pub fn resolve_model_alias(model: &str) -> String {
     let trimmed = model.trim();
     let lower = trimmed.to_ascii_lowercase();
-    MODEL_REGISTRY
-        .iter()
-        .find_map(|(alias, metadata)| {
-            (*alias == lower).then_some(match metadata.provider {
-                ProviderKind::Anthropic => match *alias {
-                    "opus" => "claude-opus-4-6",
-                    "sonnet" => "claude-sonnet-4-6",
-                    "haiku" => "claude-haiku-4-5-20251213",
-                    _ => trimmed,
-                },
-                ProviderKind::Xai => match *alias {
-                    "grok" | "grok-3" => "grok-3",
-                    "grok-mini" | "grok-3-mini" => "grok-3-mini",
-                    "grok-2" => "grok-2",
-                    _ => trimmed,
-                },
-                ProviderKind::OpenAi => trimmed,
-            })
-        })
-        .map_or_else(|| trimmed.to_string(), ToOwned::to_owned)
+
+    if let Some(config) = get_model_config(&lower) {
+        return config.canonical;
+    }
+
+    if lower.starts_with("claude") {
+        return trimmed.to_string();
+    }
+    if lower.starts_with("grok") {
+        return trimmed.to_string();
+    }
+    if lower.starts_with("deepseek") {
+        return trimmed.to_string();
+    }
+
+    trimmed.to_string()
 }
 
 #[must_use]
-pub fn metadata_for_model(model: &str) -> Option<ProviderMetadata> {
+pub fn metadata_for_model(model: &str) -> Option<ProviderConfig> {
     let canonical = resolve_model_alias(model);
+
+    if let Some(config) = get_model_config(model.trim().to_ascii_lowercase().as_str()) {
+        return get_provider_config(&config.provider);
+    }
+
     if canonical.starts_with("claude") {
-        return Some(ProviderMetadata {
-            provider: ProviderKind::Anthropic,
-            auth_env: "ANTHROPIC_API_KEY",
-            base_url_env: "ANTHROPIC_BASE_URL",
-            default_base_url: anthropic::DEFAULT_BASE_URL,
-        });
+        return get_provider_config("anthropic");
     }
     if canonical.starts_with("grok") {
-        return Some(ProviderMetadata {
-            provider: ProviderKind::Xai,
-            auth_env: "XAI_API_KEY",
-            base_url_env: "XAI_BASE_URL",
-            default_base_url: openai_compat::DEFAULT_XAI_BASE_URL,
-        });
+        return get_provider_config("xai");
     }
+    if canonical.starts_with("deepseek") {
+        return get_provider_config("deepseek");
+    }
+
     None
 }
 
 #[must_use]
 pub fn detect_provider_kind(model: &str) -> ProviderKind {
-    if let Some(metadata) = metadata_for_model(model) {
-        return metadata.provider;
+    if let Some(config) = metadata_for_model(model) {
+        return ProviderKind::from(config.api_type);
     }
+
     if anthropic::has_auth_from_env_or_saved().unwrap_or(false) {
         return ProviderKind::Anthropic;
     }
     if openai_compat::has_api_key("OPENAI_API_KEY") {
-        return ProviderKind::OpenAi;
+        return ProviderKind::OpenAiCompat;
     }
     if openai_compat::has_api_key("XAI_API_KEY") {
-        return ProviderKind::Xai;
+        return ProviderKind::OpenAiCompat;
     }
+
     ProviderKind::Anthropic
 }
 
@@ -206,7 +129,24 @@ pub fn max_tokens_for_model(model: &str) -> u32 {
 
 #[must_use]
 pub fn model_token_limit(model: &str) -> Option<ModelTokenLimit> {
+    let lower = model.trim().to_ascii_lowercase();
+    
+    if let Some(config) = get_model_config(&lower) {
+        return Some(ModelTokenLimit {
+            max_output_tokens: config.max_output_tokens,
+            context_window_tokens: config.context_window_tokens,
+        });
+    }
+    
     let canonical = resolve_model_alias(model);
+    
+    if let Some(config) = get_model_config(&canonical.to_ascii_lowercase()) {
+        return Some(ModelTokenLimit {
+            max_output_tokens: config.max_output_tokens,
+            context_window_tokens: config.context_window_tokens,
+        });
+    }
+
     match canonical.as_str() {
         "claude-opus-4-6" => Some(ModelTokenLimit {
             max_output_tokens: 32_000,
@@ -281,7 +221,7 @@ mod tests {
 
     #[test]
     fn detects_provider_from_model_name_first() {
-        assert_eq!(detect_provider_kind("grok"), ProviderKind::Xai);
+        assert_eq!(detect_provider_kind("grok"), ProviderKind::OpenAiCompat);
         assert_eq!(
             detect_provider_kind("claude-sonnet-4-6"),
             ProviderKind::Anthropic

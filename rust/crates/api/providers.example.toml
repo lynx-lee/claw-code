@@ -1,0 +1,88 @@
+# Claw Code 多模型供应商配置示例
+# 将此文件复制到 ~/.config/claw-code/providers.toml
+
+[[providers]]
+name = "anthropic"
+api_type = "anthropic"
+api_key_env = "ANTHROPIC_API_KEY"
+base_url_env = "ANTHROPIC_BASE_URL"
+default_base_url = "https://api.anthropic.com"
+
+[[providers]]
+name = "openai"
+api_type = "openai_compat"
+api_key_env = "OPENAI_API_KEY"
+base_url_env = "OPENAI_BASE_URL"
+default_base_url = "https://api.openai.com/v1"
+
+[[providers]]
+name = "xai"
+api_type = "openai_compat"
+api_key_env = "XAI_API_KEY"
+base_url_env = "XAI_BASE_URL"
+default_base_url = "https://api.x.ai/v1"
+
+[[providers]]
+name = "deepseek"
+api_type = "openai_compat"
+api_key_env = "DEEPSEEK_API_KEY"
+base_url_env = "DEEPSEEK_BASE_URL"
+default_base_url = "https://api.deepseek.com/v1"
+
+# 添加更多供应商示例
+# [[providers]]
+# name = "ollama"
+# api_type = "openai_compat"
+# api_key_env = "OLLAMA_API_KEY"
+# base_url_env = "OLLAMA_BASE_URL"
+# default_base_url = "http://localhost:11434/v1"
+
+[[models]]
+alias = "opus"
+canonical = "claude-opus-4-6"
+provider = "anthropic"
+max_output_tokens = 32000
+context_window_tokens = 200000
+
+[[models]]
+alias = "sonnet"
+canonical = "claude-sonnet-4-6"
+provider = "anthropic"
+max_output_tokens = 64000
+context_window_tokens = 200000
+
+[[models]]
+alias = "haiku"
+canonical = "claude-haiku-4-5-20251213"
+provider = "anthropic"
+max_output_tokens = 64000
+context_window_tokens = 200000
+
+[[models]]
+alias = "grok"
+canonical = "grok-3"
+provider = "xai"
+max_output_tokens = 64000
+context_window_tokens = 131072
+
+[[models]]
+alias = "grok-mini"
+canonical = "grok-3-mini"
+provider = "xai"
+max_output_tokens = 64000
+context_window_tokens = 131072
+
+[[models]]
+alias = "deepseek"
+canonical = "deepseek-chat"
+provider = "deepseek"
+max_output_tokens = 8192
+context_window_tokens = 64000
+
+# 添加更多模型示例
+# [[models]]
+# alias = "llama3"
+# canonical = "llama3.1:70b"
+# provider = "ollama"
+# max_output_tokens = 4096
+# context_window_tokens = 128000
