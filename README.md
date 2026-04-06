@@ -91,3 +91,85 @@ Claw Code is built in the open alongside the broader UltraWorkers toolchain:
 
 - This repository does **not** claim ownership of the original Claude Code source material.
 - This repository is **not affiliated with, endorsed by, or maintained by Anthropic**.
+
+---
+
+## 中文说明
+
+### 项目简介
+
+Claw Code 是 `claw` CLI Agent 的公开 Rust 实现。本项目支持多模型供应商，可通过配置文件灵活扩展。
+
+### 多模型供应商支持
+
+项目内置支持以下供应商：
+
+| 供应商 | API 类型 | 环境变量 |
+|--------|----------|----------|
+| Anthropic | anthropic | `ANTHROPIC_API_KEY` |
+| OpenAI | openai_compat | `OPENAI_API_KEY` |
+| xAI | openai_compat | `XAI_API_KEY` |
+| DeepSeek | openai_compat | `DEEPSEEK_API_KEY` |
+
+### 添加新供应商
+
+创建配置文件 `~/.config/claw-code/providers.toml`：
+
+```toml
+[[providers]]
+name = "ollama"
+api_type = "openai_compat"
+api_key_env = "OLLAMA_API_KEY"
+base_url_env = "OLLAMA_BASE_URL"
+default_base_url = "http://localhost:11434/v1"
+
+[[models]]
+alias = "llama3"
+canonical = "llama3.1:70b"
+provider = "ollama"
+max_output_tokens = 4096
+context_window_tokens = 128000
+```
+
+配置完成后，即可使用 `claw --model llama3 "你的问题"` 调用新模型。
+
+### 快速开始
+
+```bash
+# 构建项目
+cd rust
+cargo build --workspace
+
+# 查看帮助
+./target/debug/claw --help
+
+# 使用默认模型（Anthropic）
+export ANTHROPIC_API_KEY="sk-ant-..."
+./target/debug/claw prompt "总结这个仓库"
+
+# 使用其他模型
+export XAI_API_KEY="your-xai-key"
+./target/debug/claw --model grok "你好"
+
+# 运行测试
+cargo test --workspace
+```
+
+### 目录结构
+
+```
+rust/
+├── crates/
+│   ├── api/          # API 客户端，支持多供应商
+│   ├── commands/     # 命令解析
+│   ├── runtime/      # 运行时核心
+│   └── rusty-claude-cli/  # CLI 入口
+└── Cargo.toml
+```
+
+### 文档
+
+- [USAGE.md](./USAGE.md) — 使用指南
+- [rust/README.md](./rust/README.md) — Rust 工作区详情
+- [PARITY.md](./PARITY.md) — Rust 移植状态
+- [ROADMAP.md](./ROADMAP.md) — 开发路线图
