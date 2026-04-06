@@ -70,6 +70,13 @@ fn default_providers() -> Vec<ProviderConfig> {
             base_url_env: Some("DEEPSEEK_BASE_URL".to_string()),
             default_base_url: "https://api.deepseek.com/v1".to_string(),
         },
+        ProviderConfig {
+            name: "ollama".to_string(),
+            api_type: ApiType::OpenAiCompat,
+            api_key_env: "OLLAMA_API_KEY".to_string(),
+            base_url_env: Some("OLLAMA_BASE_URL".to_string()),
+            default_base_url: "http://localhost:11434/v1".to_string(),
+        },
     ]
 }
 
@@ -137,6 +144,27 @@ fn default_models() -> Vec<ModelConfig> {
             provider: "deepseek".to_string(),
             max_output_tokens: 8_192,
             context_window_tokens: 64_000,
+        },
+        ModelConfig {
+            alias: "llama3".to_string(),
+            canonical: "llama3".to_string(),
+            provider: "ollama".to_string(),
+            max_output_tokens: 4_096,
+            context_window_tokens: 128_000,
+        },
+        ModelConfig {
+            alias: "llama3.1".to_string(),
+            canonical: "llama3.1".to_string(),
+            provider: "ollama".to_string(),
+            max_output_tokens: 4_096,
+            context_window_tokens: 128_000,
+        },
+        ModelConfig {
+            alias: "qwen".to_string(),
+            canonical: "qwen2.5".to_string(),
+            provider: "ollama".to_string(),
+            max_output_tokens: 4_096,
+            context_window_tokens: 128_000,
         },
     ]
 }

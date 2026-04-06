@@ -79,6 +79,10 @@ pub fn metadata_for_model(model: &str) -> Option<ProviderConfig> {
     if let Some(config) = get_model_config(model.trim().to_ascii_lowercase().as_str()) {
         return get_provider_config(&config.provider);
     }
+    
+    if let Some(config) = get_model_config(&canonical.to_ascii_lowercase()) {
+        return get_provider_config(&config.provider);
+    }
 
     if canonical.starts_with("claude") {
         return get_provider_config("anthropic");
@@ -106,6 +110,9 @@ pub fn detect_provider_kind(model: &str) -> ProviderKind {
         return ProviderKind::OpenAiCompat;
     }
     if openai_compat::has_api_key("XAI_API_KEY") {
+        return ProviderKind::OpenAiCompat;
+    }
+    if openai_compat::has_api_key("OLLAMA_API_KEY") {
         return ProviderKind::OpenAiCompat;
     }
 
