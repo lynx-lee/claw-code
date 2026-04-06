@@ -62,6 +62,14 @@ impl ProviderClient {
     }
 
     #[must_use]
+    pub fn with_base_url(self, base_url: impl Into<String>) -> Self {
+        match self {
+            Self::Anthropic(client) => Self::Anthropic(client.with_base_url(base_url)),
+            other @ Self::OpenAiCompat(_) => other,
+        }
+    }
+
+    #[must_use]
     pub fn prompt_cache_stats(&self) -> Option<PromptCacheStats> {
         match self {
             Self::Anthropic(client) => client.prompt_cache_stats(),
