@@ -100,20 +100,19 @@ pub fn metadata_for_model(model: &str) -> Option<ProviderConfig> {
 #[must_use]
 pub fn detect_provider_kind(model: &str) -> ProviderKind {
     if let Some(config) = metadata_for_model(model) {
-        return ProviderKind::from(config.api_type);
+        if config.has_api_key() {
+            return ProviderKind::from(config.api_type);
+        }
+    }
+
+    for provider in crate::config::all_providers() {
+        if provider.has_api_key() {
+            return ProviderKind::from(provider.api_type);
+        }
     }
 
     if anthropic::has_auth_from_env_or_saved().unwrap_or(false) {
         return ProviderKind::Anthropic;
-    }
-    if openai_compat::has_api_key("OPENAI_API_KEY") {
-        return ProviderKind::OpenAiCompat;
-    }
-    if openai_compat::has_api_key("XAI_API_KEY") {
-        return ProviderKind::OpenAiCompat;
-    }
-    if openai_compat::has_api_key("OLLAMA_API_KEY") {
-        return ProviderKind::OpenAiCompat;
     }
 
     ProviderKind::Anthropic

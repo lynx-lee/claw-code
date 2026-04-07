@@ -103,19 +103,14 @@ impl OpenAiCompatClient {
     }
 
     pub fn from_provider_config(config: &ProviderConfig) -> Result<Self, ApiError> {
-        let Some(api_key) = read_env_non_empty(&config.api_key_env)? else {
+        let Some(api_key) = config.get_api_key() else {
             return Err(ApiError::missing_credentials(
                 &config.name,
                 &[&config.api_key_env as &str],
             ));
         };
 
-        let base_url = config
-            .base_url_env
-            .as_ref()
-            .and_then(|env| std::env::var(env).ok())
-            .filter(|s| !s.is_empty())
-            .unwrap_or_else(|| config.default_base_url.clone());
+        let base_url = config.get_base_url();
 
         Ok(Self {
             http: reqwest::Client::new(),

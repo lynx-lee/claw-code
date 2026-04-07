@@ -32,37 +32,17 @@ impl ProviderClient {
             })),
             ProviderKind::OpenAiCompat => {
                 let config = provider_config.or_else(|| {
-                    if openai_compat::has_api_key("OLLAMA_API_KEY") {
-                        Some(ProviderConfig {
-                            name: "ollama".to_string(),
-                            api_type: ApiType::OpenAiCompat,
-                            api_key_env: "OLLAMA_API_KEY".to_string(),
-                            base_url_env: Some("OLLAMA_BASE_URL".to_string()),
-                            default_base_url: "http://localhost:11434/v1".to_string(),
-                        })
-                    } else if openai_compat::has_api_key("XAI_API_KEY") {
-                        Some(ProviderConfig {
-                            name: "xai".to_string(),
-                            api_type: ApiType::OpenAiCompat,
-                            api_key_env: "XAI_API_KEY".to_string(),
-                            base_url_env: Some("XAI_BASE_URL".to_string()),
-                            default_base_url: "https://api.x.ai/v1".to_string(),
-                        })
-                    } else {
-                        Some(ProviderConfig {
-                            name: "openai".to_string(),
-                            api_type: ApiType::OpenAiCompat,
-                            api_key_env: "OPENAI_API_KEY".to_string(),
-                            base_url_env: Some("OPENAI_BASE_URL".to_string()),
-                            default_base_url: "https://api.openai.com/v1".to_string(),
-                        })
-                    }
+                    crate::config::all_providers()
+                        .into_iter()
+                        .find(|p| p.has_api_key())
                 }).unwrap_or_else(|| ProviderConfig {
                     name: "openai".to_string(),
                     api_type: ApiType::OpenAiCompat,
                     api_key_env: "OPENAI_API_KEY".to_string(),
                     base_url_env: Some("OPENAI_BASE_URL".to_string()),
                     default_base_url: "https://api.openai.com/v1".to_string(),
+                    api_key: None,
+                    base_url: None,
                 });
                 Ok(Self::OpenAiCompat(
                     OpenAiCompatClient::from_provider_config(&config)?,

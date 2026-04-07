@@ -2,3 +2,4 @@ target/
 .omx/
 .clawd-agents/
 .claw/
+.sandbox-tmp/

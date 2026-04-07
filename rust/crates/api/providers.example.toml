@@ -1,6 +1,8 @@
 # Claw Code 多模型供应商配置示例
-# 将此文件复制到 ~/.config/claw-code/providers.toml
+# macOS: ~/Library/Application Support/claw-code/providers.toml
+# Linux: ~/.config/claw-code/providers.toml
 
+# 方式一：使用环境变量
 [[providers]]
 name = "anthropic"
 api_type = "anthropic"
@@ -8,34 +10,31 @@ api_key_env = "ANTHROPIC_API_KEY"
 base_url_env = "ANTHROPIC_BASE_URL"
 default_base_url = "https://api.anthropic.com"
 
+# 方式二：直接在配置文件中指定 API key 和 base_url（推荐）
 [[providers]]
-name = "openai"
-api_type = "openai_compat"
-api_key_env = "OPENAI_API_KEY"
-base_url_env = "OPENAI_BASE_URL"
-default_base_url = "https://api.openai.com/v1"
+name = "ollama"
+api_type = "open_ai_compat"
+api_key_env = "OLLAMA_API_KEY"
+base_url_env = "OLLAMA_BASE_URL"
+default_base_url = "http://localhost:11434/v1"
+api_key = "your-api-key-here"
+base_url = "http://192.168.124.168:8080/v1"
 
+# 方式三：混合使用（配置文件优先，环境变量作为后备）
 [[providers]]
 name = "xai"
-api_type = "openai_compat"
+api_type = "open_ai_compat"
 api_key_env = "XAI_API_KEY"
 base_url_env = "XAI_BASE_URL"
 default_base_url = "https://api.x.ai/v1"
+# api_key = "sk-xxx"  # 可选：直接指定，优先于环境变量
 
 [[providers]]
 name = "deepseek"
-api_type = "openai_compat"
+api_type = "open_ai_compat"
 api_key_env = "DEEPSEEK_API_KEY"
 base_url_env = "DEEPSEEK_BASE_URL"
 default_base_url = "https://api.deepseek.com/v1"
-
-# 添加更多供应商示例
-# [[providers]]
-# name = "ollama"
-# api_type = "openai_compat"
-# api_key_env = "OLLAMA_API_KEY"
-# base_url_env = "OLLAMA_BASE_URL"
-# default_base_url = "http://localhost:11434/v1"
 
 [[models]]
 alias = "opus"
@@ -79,10 +78,16 @@ provider = "deepseek"
 max_output_tokens = 8192
 context_window_tokens = 64000
 
-# 添加更多模型示例
-# [[models]]
-# alias = "llama3"
-# canonical = "llama3.1:70b"
-# provider = "ollama"
-# max_output_tokens = 4096
-# context_window_tokens = 128000
+[[models]]
+alias = "llama3"
+canonical = "llama3"
+provider = "ollama"
+max_output_tokens = 4096
+context_window_tokens = 128000
+
+[[models]]
+alias = "qwen"
+canonical = "qwen2.5"
+provider = "ollama"
+max_output_tokens = 4096
+context_window_tokens = 128000

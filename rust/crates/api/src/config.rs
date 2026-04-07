@@ -22,6 +22,10 @@ pub struct ProviderConfig {
     pub api_key_env: String,
     pub base_url_env: Option<String>,
     pub default_base_url: String,
+    #[serde(default)]
+    pub api_key: Option<String>,
+    #[serde(default)]
+    pub base_url: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
@@ -48,6 +52,8 @@ fn default_providers() -> Vec<ProviderConfig> {
             api_key_env: "ANTHROPIC_API_KEY".to_string(),
             base_url_env: Some("ANTHROPIC_BASE_URL".to_string()),
             default_base_url: "https://api.anthropic.com".to_string(),
+            api_key: None,
+            base_url: None,
         },
         ProviderConfig {
             name: "openai".to_string(),
@@ -55,6 +61,8 @@ fn default_providers() -> Vec<ProviderConfig> {
             api_key_env: "OPENAI_API_KEY".to_string(),
             base_url_env: Some("OPENAI_BASE_URL".to_string()),
             default_base_url: "https://api.openai.com/v1".to_string(),
+            api_key: None,
+            base_url: None,
         },
         ProviderConfig {
             name: "xai".to_string(),
@@ -62,6 +70,8 @@ fn default_providers() -> Vec<ProviderConfig> {
             api_key_env: "XAI_API_KEY".to_string(),
             base_url_env: Some("XAI_BASE_URL".to_string()),
             default_base_url: "https://api.x.ai/v1".to_string(),
+            api_key: None,
+            base_url: None,
         },
         ProviderConfig {
             name: "deepseek".to_string(),
@@ -69,6 +79,8 @@ fn default_providers() -> Vec<ProviderConfig> {
             api_key_env: "DEEPSEEK_API_KEY".to_string(),
             base_url_env: Some("DEEPSEEK_BASE_URL".to_string()),
             default_base_url: "https://api.deepseek.com/v1".to_string(),
+            api_key: None,
+            base_url: None,
         },
         ProviderConfig {
             name: "ollama".to_string(),
@@ -76,6 +88,8 @@ fn default_providers() -> Vec<ProviderConfig> {
             api_key_env: "OLLAMA_API_KEY".to_string(),
             base_url_env: Some("OLLAMA_BASE_URL".to_string()),
             default_base_url: "http://localhost:11434/v1".to_string(),
+            api_key: None,
+            base_url: None,
         },
     ]
 }
@@ -255,4 +269,35 @@ pub fn all_models() -> Vec<ModelConfig> {
         .get()
         .map(|r| r.values().cloned().collect())
         .unwrap_or_default()
+}
+
+impl ProviderConfig {
+    pub fn get_api_key(&self) -> Option<String> {
+        if let Some(key) = &self.api_key {
+            if !key.is_empty() {
+                return Some(key.clone());
+            }
+        }
+        std::env::var(&self.api_key_env).ok().filter(|s| !s.is_empty())
+    }
+
+    pub fn get_base_url(&self) -> String {
+        if let Some(url) = &self.base_url {
+            if !url.is_empty() {
+                return url.clone();
+            }
+        }
+        if let Some(env_var) = &self.base_url_env {
+            if let Ok(url) = std::env::var(env_var) {
+                if !url.is_empty() {
+                    return url;
+                }
+            }
+        }
+        self.default_base_url.clone()
+    }
+
+    pub fn has_api_key(&self) -> bool {
+        self.get_api_key().is_some()
+    }
 }
