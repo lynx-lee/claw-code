@@ -485,7 +485,7 @@ cd rust
 cargo build --workspace
 
 # 构建优化版本（发布模式，速度更快但编译时间更长）
-cargo release build --workspace
+cargo build --workspace --release
 # 或者使用 cargo install 直接构建安装
 cargo install --path crates/rusty-claude-cli
 ```
@@ -543,6 +543,93 @@ cd rust
 ```
 
 OAuth 方式会将凭证安全地存储在本地。
+
+### 多模型供应商配置
+
+Claw 支持多种 AI 模型供应商，可通过配置文件灵活配置。
+
+#### 配置文件路径
+
+| 操作系统 | 路径 |
+|----------|------|
+| macOS | `~/Library/Application Support/claw-code/providers.toml` |
+| Linux | `~/.config/claw-code/providers.toml` |
+
+#### 配置文件格式
+
+```toml
+# 方式一：使用环境变量
+[[providers]]
+name = "anthropic"
+api_type = "anthropic"
+api_key_env = "ANTHROPIC_API_KEY"
+base_url_env = "ANTHROPIC_BASE_URL"
+default_base_url = "https://api.anthropic.com"
+
+# 方式二：直接在配置文件中指定 API key（推荐）
+[[providers]]
+name = "ollama"
+api_type = "open_ai_compat"
+api_key_env = "OLLAMA_API_KEY"
+base_url_env = "OLLAMA_BASE_URL"
+default_base_url = "http://localhost:11434/v1"
+api_key = "your-api-key-here"
+base_url = "http://192.168.124.168:8080/v1"
+
+# 方式三：混合使用（配置文件优先，环境变量作为后备）
+[[providers]]
+name = "xai"
+api_type = "open_ai_compat"
+api_key_env = "XAI_API_KEY"
+base_url_env = "XAI_BASE_URL"
+default_base_url = "https://api.x.ai/v1"
+# api_key = "sk-xxx"  # 可选：直接指定，优先于环境变量
+
+# 模型别名配置
+[[models]]
+alias = "llama3"
+canonical = "llama3"
+provider = "ollama"
+max_output_tokens = 4096
+context_window_tokens = 128000
+```
+
+#### 内置支持的供应商
+
+| 供应商 | api_type | 环境变量 |
+|--------|----------|----------|
+| Anthropic | `anthropic` | `ANTHROPIC_API_KEY` |
+| OpenAI | `open_ai_compat` | `OPENAI_API_KEY` |
+| xAI | `open_ai_compat` | `XAI_API_KEY` |
+| DeepSeek | `open_ai_compat` | `DEEPSEEK_API_KEY` |
+| Ollama | `open_ai_compat` | `OLLAMA_API_KEY` |
+
+#### 使用示例
+
+```bash
+# 使用配置文件中的模型（无需设置环境变量）
+./target/debug/claw --model llama3 "你好"
+
+# 使用内置别名
+./target/debug/claw --model grok "解释这段代码"
+./target/debug/claw --model deepseek "帮我写一个函数"
+
+# 查看可用模型
+./target/debug/claw
+> /model
+```
+
+#### 配置优先级
+
+1. 配置文件中的 `api_key` 和 `base_url`（最高优先级）
+2. 环境变量（`api_key_env` 和 `base_url_env` 指定的变量）
+3. `default_base_url`（仅作为 base_url 的默认值）
+
+#### 注意事项
+
+- `api_type` 必须是 `anthropic` 或 `open_ai_compat`（带下划线）
+- 配置文件修改后立即生效，无需重启
+- API key 存储在配置文件中，请注意文件权限安全
 
 ### 沙箱支持（macOS）
 
@@ -668,4 +755,4 @@ claw --resume <session-id>
 
 ---
 
-*文档生成自 claw v0.1.0 | 最后更新：2026-03-31*
+*文档生成自 claw v0.1.0 | 最后更新：2026-04-07*
